@@ -100,7 +100,7 @@ std::ostream* Debug::changeStream(std::ostream &newStream)
 {
 	std::ostream *temp;
 	stream->flush();
-	temp = errStream;
+	temp = stream;
 	stream = &newStream;
 	return (temp);
 }
