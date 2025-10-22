@@ -11,12 +11,12 @@ bool is_stdout_on_tty()
 
 bool is_stderr_on_tty()
 {
-	return is_terminal("/dev/stderr");
+    return is_terminal("/dev/stderr");
 }
 
 bool is_stdin_on_tty()
 {
-	return is_terminal("/dev/stdin");
+    return is_terminal("/dev/stdin");
 }
 
 /**
