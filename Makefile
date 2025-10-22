@@ -7,9 +7,9 @@ MAKE := $(MAKE) -j $(NO_DIR)
 NAME = webserv
 
 # Debugging flags
-CXXFLAGS_DEBUG = -Wall -Wextra -g3 -D DEBUG=1 -std=c++98
+CXXFLAGS_DEBUG = -Wall -Wextra -g3 -std=c++98
 CXX_DEBUG = clang++
-CXX_DEBUG_CXXFLAGS = -std=c++98 -g3 -D DEBUG=1 -Weverything -Wno-padded -pedantic -O2 -Wwrite-strings -Wconversion -fsanitize=address -fsanitize=leak
+CXX_DEBUG_CXXFLAGS = -std=c++98 -g3 -Weverything -Wno-padded -pedantic -O2 -Wwrite-strings -Wconversion -fsanitize=address -fsanitize=leak -Wno-covered-switch-default
 #############################################################################################
 #                                                                                           #
 #                                         DIRECTORIES                                       #
@@ -29,11 +29,13 @@ P_INC = inc/
 # Headers
 INC = \
 	Debug.hpp \
+	utils.hpp
 
 # Source files
 SRC = \
 	main.cpp \
 	Debug.cpp \
+	utils.cpp \
 
 LIBS = \
 

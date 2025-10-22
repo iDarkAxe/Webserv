@@ -7,7 +7,7 @@ int main(int argc, char** argv)
 {
 	if (argc != 2)
 	{
-		std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+		Debug::print(ERROR, "Usage: " + std::string(argv[0]) + " <config_file>");
 		return 1;
 	}
 	std::fstream configFile;
@@ -15,10 +15,10 @@ int main(int argc, char** argv)
 	configFile.open(argv[1]);
 	if (!configFile || !configFile.is_open())
 	{
-		std::cerr << "Error opening config file: " << argv[1] << std::endl;
+		Debug::print(ERROR, "Error opening config file: " + std::string(argv[1]));
 		return 1;
 	}
-	std::cout << "Config file " << argv[1] << " opened successfully." << std::endl;
+	Debug::print(INFO, "Config file " + std::string(argv[1]) + " opened successfully.");
 	configFile.close();
 	return 0;
 }
