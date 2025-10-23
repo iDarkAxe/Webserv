@@ -3,12 +3,8 @@
 > Checking the value of `errno` to adjust the server behaviour is strictly forbidden after performing a read or write operation.
 > > So it's acceptable if used for initialisation of the polling functions ?
 
-## poll ##
-
-```C
-#include <poll.h>
-int poll(struct pollfd fds[], nfds_t nfds, int timeout);
-```
+`select` is the first created, `poll` is a replacement but created in 1983.
+`epoll` (linux) and `kqueue` (macOS) are scalable I/O events that are more efficient when used with a lot of events. `kevent` from kqueue is said to be faster as it combines two syscall as `epoll_ctl` and `epoll_wait` makes.
 
 ## select ##
 
@@ -17,6 +13,18 @@ int poll(struct pollfd fds[], nfds_t nfds, int timeout);
 
 int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds,
     fd_set *restrict errorfds, struct timeval *restrict timeout);
+```
+
+## poll ##
+
+```C
+#include <poll.h>
+ struct pollfd {
+    int   fd;         /* file descriptor */
+    short events;     /* requested events */
+   short revents;    /* returned events */
+};
+int poll(struct pollfd fds[], nfds_t nfds, int timeout);
 ```
 
 ## epoll ##
