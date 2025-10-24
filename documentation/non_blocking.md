@@ -61,13 +61,34 @@ ERRORS :
  * @brief Add, modify or remove entrieds in interest list
  * 
  * @param[in] epfd file descriptor of epoll instance
- * @param[in] op
- * @param[in] fd
- * @param[in, out] event
- * @return a valid fd, -1 if error and errno set
+ * @param[in] op type of operation
+ * @param[in] fd fd we want to add/remove
+ * @param[in, out] event event to modify
+ * @return 0 OK, -1 if error and errno set
  */
 int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
 ```
+
+#### Flags for op ####
+
+* `EPOLL_CTL_ADD`  : register a fd to the interest list
+* `EPOLL_CTL_DEL` : delete/deregister fd from interest list (not closing it)
+* `EPOLL_CTL_MOD` : modify the event fd
+  > if used, you need to set `event` as a pointer to struct `epoll_event`
+
+* `EPOLLIN` : makes epoll track if fd is ready for READ
+* `EPOLLOUT` : makes epoll track if fd is ready for WRITE
+* `EPOLLET` : makes it 'edge-triggered', you need to keep reading until the end because the next epoll won't remind you that there is still data to write/read.
+
+Epoll usage for a web server socket:
+
+* The listening socket file descriptor (FD) itself is a single FD. It does not contain multiple FDs. Instead, when you accept a new connection on this listening socket, accept() returns a new FD for that connection. So you end up with multiple FDs: one for listening new connections, and one for each client connected.
+* epoll monitors multiple FDs simultaneously by registering each FD separately with epoll_ctl. You add the listening socket FD initially, and then for each accepted connection, you add its new FD to the epoll set. epoll_wait then reports readiness events for any of these FDs.
+* The array you pass to epoll_wait (events[MAX_EVENTS]) is a buffer you allocate to hold the event notifications from epoll_wait. If more events happen than fit in your array, subsequent epoll_wait calls will provide the rest.
+* The "events to keep in memory" means this array you maintain on the user-space side to receive event notifications from the kernel. You should allocate it with a size that balances memory usage and concurrency needs.
+* Each epoll_event contains a field data.fd which is the FD that generated the event, so your code can distinguish events from different connections.
+
+To summarize: your listening socket FD is single, but accept() creates many FDs for client connections. You add all these FDs to epoll.
 
 ### epoll_wait ###
 
@@ -80,13 +101,27 @@ int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
  * @param[in] epfd file descriptor of epoll instance
  * @param[in, out] event
  * @param[in] maxevents maximum number of events returned (>0)
- * @param[in] timeout number of milliseconds before epoll_wait() unblocks itself
+ * @param[in] timeout number of milliseconds before epoll_wait() unblocks itself, -1 is infinite
  * @return number of fd ready for I/O, 0 if timeout, -1 if error and errno set
  */
 int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
 ```
 
+* `events` : need to be a contiguous block of events, a vector can grow and shrink and is contiguous
+
+One implementation of events instead of a tab of events (`event[SIZE]`), nfds is the current number of fds modified :
+
+```C
+if (nfds == events.size())
+    events.resize(events.size() * 2); // or just a .push_back() to not double the size
+else if (nfds < events.size() / 2 && events.size() > MAX_EVENTS_SIZE) //if events is becoming too big, we can shrink it
+    events.resize(events.size() / 2);
+```
+
 ## kqueue / kevent ##
+
+> [!WARNING]
+> Only on BSD and macOS, so we can't use it. We could use them if we want to make port the program.
 
 ```C
 #include <sys/event.h>
