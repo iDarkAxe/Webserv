@@ -64,7 +64,7 @@ INCS = \
 #                                                                                           #
 #############################################################################################
 all: 
-	@$(MAKE) $(NAME)
+	@$(MAKE) $(NAME) client
 
 # Create $(NAME) executable
 $(NAME): $(OBJS) $(INCS)
@@ -82,6 +82,9 @@ $(P_OBJ)%.o: $(P_SRC)%.cpp $(INCS)
 	else \
 		echo "$(Red)Error creating $@$(Color_Off)"; \
 	fi
+
+client: 
+	$(CXX) $(CXXFLAGS) src/client.cpp -I inc -o $@
 
 #############################################################################################
 #                                                                                           #
