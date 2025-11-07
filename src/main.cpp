@@ -122,7 +122,8 @@ void app(void)
 			}
 
 			/* what is the new maximum fd ? */
-			max = csock > max ? csock : max;
+			if (csock > max)
+				max = csock;
 
 			FD_SET(csock, &rdfs);
 
