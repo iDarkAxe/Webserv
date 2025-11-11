@@ -13,8 +13,9 @@
 
 #include "server.h"
 #include "client.h"
-
+#include <sys/epoll.h>
 #include <signal.h>
+#include <vector>
 
 SOCKET g_socket_fd = -1; // variable globale
 Client *g_clients = NULL; // variable globale
@@ -65,35 +66,27 @@ void app(void)
 	/* an array for all clients */
 	Client clients[MAX_CLIENTS];
 	g_clients = clients;
-	fd_set rdfs;
-
-	while(1)
+	int epfd;
+	epfd = epoll_create(1);
+	struct epoll_event ev;
+	ev.data.fd = sock;
+	ev.events = EPOLLIN | EPOLLOUT;
+	epoll_ctl(epfd, EPOLL_CTL_ADD, sock, &ev);
+	// fd_set rdfs;
+	std::vector<struct epoll_event> events(1);
+	events.push_back(ev);
+	while (1)
 	{
-		int i = 0;
-		FD_ZERO(&rdfs);
-
-		/* add STDIN_FILENO */
-		FD_SET(STDIN_FILENO, &rdfs);
-
-		/* add the connection socket */
-		FD_SET(sock, &rdfs);
-
-		/* add socket of each client */
-		for(i = 0; i < actual; i++)
+		if(epoll_wait(epfd, events.data(), events.size(), -1) == -1)
 		{
-			FD_SET(clients[i].sock, &rdfs);
-		}
-
-		if(select(max + 1, &rdfs, NULL, NULL, NULL) == -1)
-		{
-			perror("select()");
+			perror("epoll_wait()");
 			clear_clients(g_clients, MAX_CLIENTS);
 			end_connection(g_socket_fd);
 			exit(errno);
 		}
 
 		/* something from standard input : i.e keyboard with an enter */
-		if(FD_ISSET(STDIN_FILENO, &rdfs))
+		if(events[0].events & EPOLLIN && events[0].data.fd == STDIN_FILENO)
 		{
 			clear_clients(clients, actual);
 			end_connection(sock);
@@ -101,7 +94,7 @@ void app(void)
 			end();
 			exit(0);
 		}
-		else if(FD_ISSET(sock, &rdfs))
+		else if(events[0].events & EPOLLIN && events[0].data.fd == sock)
 		{
 			/* new client */
 			SOCKADDR_IN csin;
